@@ -1,5 +1,5 @@
 /**
- * Jules Task Archiver — Popup Script
+ * Jules Task Manager — Popup Script
  *
  * Handles UI interactions, settings persistence, and progress display.
  */
@@ -10,6 +10,7 @@ const $ = (sel) => document.querySelector(sel)
 const ghOwnerInput = $('#ghOwner')
 const ghTokenInput = $('#ghToken')
 const forceCheckbox = $('#force')
+const repoFilterInput = $('#repoFilter')
 const startBtn = $('#startBtn')
 const resetBtn = $('#resetBtn')
 const progressSection = $('#progressSection')
@@ -88,8 +89,9 @@ document.querySelectorAll('input[name="mode"]').forEach((radio) => {
 })
 
 // --- Load saved settings & cleanup insecure storage ---
-chrome.storage.sync.get(['ghOwner', 'opMode', 'ghToken'], (syncData) => {
+chrome.storage.sync.get(['ghOwner', 'opMode', 'ghToken', 'repoFilter'], (syncData) => {
   if (syncData.ghOwner) ghOwnerInput.value = syncData.ghOwner
+  if (syncData.repoFilter) repoFilterInput.value = syncData.repoFilter
   if (syncData.opMode) {
     setActiveOpMode(syncData.opMode)
   }
@@ -110,6 +112,9 @@ chrome.storage.sync.get(['ghOwner', 'opMode', 'ghToken'], (syncData) => {
 ghOwnerInput.addEventListener('change', () => {
   chrome.storage.sync.set({ ghOwner: ghOwnerInput.value.trim() })
 })
+repoFilterInput.addEventListener('change', () => {
+  chrome.storage.sync.set({ repoFilter: repoFilterInput.value.trim() })
+})
 ghTokenInput.addEventListener('change', () => {
   chrome.storage.local.set({ ghToken: ghTokenInput.value.trim() })
 })
@@ -118,7 +123,8 @@ ghTokenInput.addEventListener('change', () => {
 startBtn.addEventListener('click', async () => {
   // Save settings first, ensuring token is only in local storage
   chrome.storage.sync.set({
-    ghOwner: ghOwnerInput.value.trim()
+    ghOwner: ghOwnerInput.value.trim(),
+    repoFilter: repoFilterInput.value.trim()
   })
   chrome.storage.sync.remove('ghToken')
   chrome.storage.local.set({
@@ -143,7 +149,8 @@ startBtn.addEventListener('click', async () => {
     force: forceCheckbox.checked,
     scope,
     activeTabId,
-    opMode
+    opMode,
+    repoFilter: repoFilterInput.value.trim()
   }
 
   // Reset UI

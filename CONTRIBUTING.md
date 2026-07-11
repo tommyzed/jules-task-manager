@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for your interest in contributing to Jules Task Archiver!
+Thank you for your interest in contributing to Jules Task Manager!
 
 ## Getting Started
 

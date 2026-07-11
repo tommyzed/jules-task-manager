@@ -1,5 +1,5 @@
 /**
- * Jules Task Archiver — Content Script (Isolated World)
+ * Jules Task Manager — Content Script (Isolated World)
  *
  * Listens for config tokens posted by main-world.js via window.postMessage.
  * Relays StartSuggestion config to background service worker.

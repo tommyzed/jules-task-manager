@@ -1,5 +1,5 @@
 /**
- * Jules Task Archiver — MAIN World Script
+ * Jules Task Manager — MAIN World Script
  *
  * Runs in the page's MAIN world (not isolated).
  * Reads WIZ_global_data tokens and installs a fetch observer

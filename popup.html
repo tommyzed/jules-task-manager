@@ -2,12 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Jules Task Archiver</title>
+    <title>Jules Task Manager</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
     <header>
-      <h1>Jules Task Archiver</h1>
+      <h1>Jules Task Manager</h1>
       <span class="version">v2.0</span>
     </header>
 
@@ -46,6 +46,18 @@
             <label><input type="radio" name="scope" value="all" checked /> All Jules tabs</label>
           </div>
         </fieldset>
+      </div>
+      <div class="setting-row">
+        <label for="repoFilter">
+          Repository Filter <span class="hint" id="repoFilterHint">(optional, e.g. adventures or owner/repo)</span>
+          <input
+            type="text"
+            id="repoFilter"
+            placeholder="e.g. tommyzed/adventures"
+            spellcheck="false"
+            aria-describedby="repoFilterHint"
+          />
+        </label>
       </div>
     </section>
 

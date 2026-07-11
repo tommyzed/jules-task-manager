@@ -1,6 +1,6 @@
 importScripts('utils.js')
 /**
- * Jules Task Archiver v2 — Background Service Worker
+ * Jules Task Manager v2 — Background Service Worker
  *
  * Orchestrates bulk archive via Jules batchexecute RPC API.
  * No DOM automation — all operations are HTTP fetch calls.
@@ -727,8 +727,25 @@ async function processSuggestionsForTab(tab, options) {
     `[${label}] ${repos.length} repo(s) with Suggestions enabled: ${repos.map((r) => r.replace(/^github\//, '')).join(', ')}`
   )
 
-  addLog(`\n[${label}] Fetching suggestions for ${repos.length} repos concurrently...`)
-  const allSuggestions = await runInPool(repos, PER_ACCOUNT_CONCURRENCY, (repo) =>
+  let filteredRepos = repos
+  if (options.repoFilter) {
+    const filterLower = options.repoFilter.toLowerCase().trim()
+    filteredRepos = repos.filter((r) => {
+      const full = r.toLowerCase()
+      const display = r.replace(/^github\//, '').toLowerCase()
+      return full.includes(filterLower) || display.includes(filterLower)
+    })
+    addLog(
+      `[${label}] Filtered repos by "${options.repoFilter}": keeping ${filteredRepos.length} repo(s): ${filteredRepos.map((r) => r.replace(/^github\//, '')).join(', ')}`
+    )
+    if (filteredRepos.length === 0) {
+      addLog(`[${label}] No matching repos found. Nothing to do.`)
+      return 0
+    }
+  }
+
+  addLog(`\n[${label}] Fetching suggestions for ${filteredRepos.length} repos concurrently...`)
+  const allSuggestions = await runInPool(filteredRepos, PER_ACCOUNT_CONCURRENCY, (repo) =>
     globalLimit(() => listSuggestions(repo, config))
       .then((suggestions) => ({ repo, suggestions }))
       .catch((e) => ({ repo, error: e.message }))
@@ -1191,14 +1208,31 @@ async function processTab(tab, options) {
   const tasks = await safeListTasks(label, config)
   if (!tasks) return 0
 
-  const { toArchive, toSkip } = await filterArchivableTasks(label, tasks, options)
+  let filteredTasks = tasks
+  if (options.repoFilter) {
+    const filterLower = options.repoFilter.toLowerCase().trim()
+    filteredTasks = tasks.filter((t) => {
+      const full = t.source ? t.source.toLowerCase() : ''
+      const display = t.repo ? t.repo.toLowerCase() : ''
+      return full.includes(filterLower) || display.includes(filterLower)
+    })
+    addLog(
+      `[${label}] Filtered tasks by repo "${options.repoFilter}": keeping ${filteredTasks.length} of ${tasks.length} tasks`
+    )
+    if (filteredTasks.length === 0) {
+      addLog(`[${label}] No matching tasks found. Nothing to do.`)
+      return 0
+    }
+  }
+
+  const { toArchive, toSkip } = await filterArchivableTasks(label, filteredTasks, options)
 
   if (toSkip.length > 0) {
     addLog(`\n[${label}] ${toSkip.length} tasks skipped (open PRs matching)`)
   }
 
   if (toArchive.length === 0) {
-    if (!options.force && tasks.some(isArchivable)) {
+    if (!options.force && filteredTasks.some(isArchivable)) {
       addLog(`[${label}] Nothing to archive (all tasks have matching open PRs).`)
     }
     return 0

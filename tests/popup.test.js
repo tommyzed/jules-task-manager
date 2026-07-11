@@ -195,6 +195,7 @@ function setupPopupSandbox() {
     '#ghOwner': createMockElement('input'),
     '#ghToken': createMockElement('input'),
     '#force': createMockElement('input', { type: 'checkbox' }),
+    '#repoFilter': createMockElement('input'),
     '#startBtn': createMockElement('button'),
     'input[name="mode"]:checked': createMockElement('input', { value: 'dry' }),
     '#resetBtn': createMockElement('button'),
@@ -360,6 +361,7 @@ describe('Initialization and Storage', () => {
     const { sandbox, elements, syncStorage, localStorage } = setupPopupSandbox()
     syncStorage.ghToken = 'secret-token'
     syncStorage.ghOwner = 'some-owner'
+    syncStorage.repoFilter = 'some-repo'
 
     vm.runInContext(popupJs, sandbox)
 
@@ -369,6 +371,7 @@ describe('Initialization and Storage', () => {
       assert.strictEqual(syncStorage.ghToken, undefined)
       assert.strictEqual(elements['#ghToken'].value, 'secret-token')
       assert.strictEqual(elements['#ghOwner'].value, 'some-owner')
+      assert.strictEqual(elements['#repoFilter'].value, 'some-repo')
       done()
     }, 10)
   })
@@ -386,11 +389,13 @@ describe('Button Event Handlers', () => {
 
     elements['#ghOwner'].value = 'test-owner'
     elements['#ghToken'].value = 'test-token'
+    elements['#repoFilter'].value = 'test-repo'
 
     await elements['#startBtn'].dispatchEvent('click')
 
     assert.strictEqual(sentMessage.action, 'START')
     assert.strictEqual(sentMessage.options.opMode, 'archive')
+    assert.strictEqual(sentMessage.options.repoFilter, 'test-repo')
     assert.strictEqual(elements['#startBtn'].disabled, true)
     assert.strictEqual(elements['#startBtn'].textContent, '⏳ Dry Running Archive...')
   })

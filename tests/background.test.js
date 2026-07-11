@@ -2097,3 +2097,94 @@ describe('Prompt Builder', () => {
     assert.strictEqual(categoryConfig['untested-function'], sandbox.test_TESTING_CONFIG)
   })
 })
+
+describe('processTab repository filtering', () => {
+  const TAB = { id: 1, url: 'https://jules.google.com/u/0/' }
+
+  function setupArchiveEnv(tasks) {
+    const { sandbox } = setupEnvironment()
+    sandbox.getTabConfig = async () => ({ at: 'at', bl: 'bl_v1', fsid: 'fsid', accountNum: '0' })
+    sandbox.listTasks = async () => tasks
+    sandbox.getOpenPRs = async () => []
+    const archived = []
+    sandbox.archiveTasks = async (ids) => {
+      archived.push(...ids)
+    }
+    return { sandbox, archived }
+  }
+
+  it('filters tasks by exact repo name in repoFilter', async () => {
+    const tasks = [
+      { id: 'a', title: 'T1', state: 12, source: 'github/tommyzed/adventures', repo: 'tommyzed/adventures' },
+      { id: 'b', title: 'T2', state: 12, source: 'github/tommyzed/add-to-calendar', repo: 'tommyzed/add-to-calendar' }
+    ]
+    const { sandbox, archived } = setupArchiveEnv(tasks)
+    await sandbox.processTab(TAB, { force: true, dryRun: false, repoFilter: 'tommyzed/adventures' })
+    assert.deepStrictEqual(archived, ['a'])
+  })
+
+  it('filters tasks by substring repo name case-insensitively', async () => {
+    const tasks = [
+      { id: 'a', title: 'T1', state: 12, source: 'github/tommyzed/adventures', repo: 'tommyzed/adventures' },
+      { id: 'b', title: 'T2', state: 12, source: 'github/tommyzed/add-to-calendar', repo: 'tommyzed/add-to-calendar' }
+    ]
+    const { sandbox, archived } = setupArchiveEnv(tasks)
+    await sandbox.processTab(TAB, { force: true, dryRun: false, repoFilter: 'Calendar' })
+    assert.deepStrictEqual(archived, ['b'])
+  })
+
+  it('returns 0 and logs message if no tasks match repoFilter', async () => {
+    const tasks = [
+      { id: 'a', title: 'T1', state: 12, source: 'github/tommyzed/adventures', repo: 'tommyzed/adventures' }
+    ]
+    const { sandbox, archived } = setupArchiveEnv(tasks)
+    const result = await sandbox.processTab(TAB, { force: true, dryRun: false, repoFilter: 'other-repo' })
+    assert.strictEqual(result, 0)
+    assert.strictEqual(archived.length, 0)
+    const state = sandbox.test_state()
+    assert.ok(state.log.some((l) => l.includes('No matching tasks found. Nothing to do.')))
+  })
+})
+
+describe('processSuggestionsForTab repository filtering', () => {
+  const TAB = { id: 1, url: 'https://jules.google.com/u/0/' }
+
+  function setupSuggestionsEnv(repos) {
+    const { sandbox } = setupEnvironment()
+    sandbox.getTabConfig = async () => ({ at: 'at', bl: 'bl_v1', fsid: 'fsid', accountNum: '0' })
+    sandbox.getStartConfig = async () => ({ modelConfig: [null, 'gemini'], featureFlags: [], experimentIds: [] })
+    sandbox.getDailySessionQuota = async () => ({ used: 0, limit: 100, remaining: 100 })
+    sandbox.safeListSources = async () => repos
+
+    const queriedRepos = []
+    sandbox.listSuggestions = async (repo) => {
+      queriedRepos.push(repo)
+      return []
+    }
+    return { sandbox, queriedRepos }
+  }
+
+  it('filters suggestions-enabled repos by exact repo name in repoFilter', async () => {
+    const repos = ['github/tommyzed/adventures', 'github/tommyzed/add-to-calendar']
+    const { sandbox, queriedRepos } = setupSuggestionsEnv(repos)
+    await sandbox.processSuggestionsForTab(TAB, { opMode: 'suggestions', repoFilter: 'tommyzed/adventures' })
+    assert.deepStrictEqual(queriedRepos, ['github/tommyzed/adventures'])
+  })
+
+  it('filters suggestions-enabled repos by substring case-insensitively', async () => {
+    const repos = ['github/tommyzed/adventures', 'github/tommyzed/add-to-calendar']
+    const { sandbox, queriedRepos } = setupSuggestionsEnv(repos)
+    await sandbox.processSuggestionsForTab(TAB, { opMode: 'suggestions', repoFilter: 'Calendar' })
+    assert.deepStrictEqual(queriedRepos, ['github/tommyzed/add-to-calendar'])
+  })
+
+  it('returns 0 and logs message if no repos match repoFilter', async () => {
+    const repos = ['github/tommyzed/adventures']
+    const { sandbox, queriedRepos } = setupSuggestionsEnv(repos)
+    const result = await sandbox.processSuggestionsForTab(TAB, { opMode: 'suggestions', repoFilter: 'other-repo' })
+    assert.strictEqual(result, 0)
+    assert.strictEqual(queriedRepos.length, 0)
+    const state = sandbox.test_state()
+    assert.ok(state.log.some((l) => l.includes('No matching repos found. Nothing to do.')))
+  })
+})
