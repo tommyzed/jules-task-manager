@@ -258,6 +258,9 @@ function parseResponse(text, rpcId) {
   // Find the entry matching our rpcId
   for (const entry of outer) {
     if (!Array.isArray(entry) || entry[1] !== rpcId) continue
+    if (entry[5] && Array.isArray(entry[5])) {
+      throw new Error(`RPC ${rpcId} error code [${entry[5].join(', ')}]`)
+    }
     if (typeof entry[2] !== 'string') return null
     const innerFixed = fixJsonControlChars(entry[2])
     const inner = JSON.parse(innerFixed)
@@ -1296,31 +1299,24 @@ async function executeArchive(label, toArchive, config) {
   let grandTotal = 0
   let lastUpdate = 0
 
-  const batches = []
-  for (let i = 0; i < toArchive.length; i += ARCHIVE_BATCH_SIZE) {
-    batches.push(toArchive.slice(i, i + ARCHIVE_BATCH_SIZE))
-  }
-
-  await runInPool(batches, PER_ACCOUNT_CONCURRENCY, async (batch) => {
-    const taskIds = batch.map((t) => t.id)
+  await runInPool(toArchive, PER_ACCOUNT_CONCURRENCY, async (task) => {
+    if (state.status === 'cancelled') return
     const now = Date.now()
     if (now - lastUpdate > 500) {
-      updateState({ currentRepo: batch[0].repo || '(no repo)' })
+      updateState({ currentRepo: task.repo || '(no repo)' })
       lastUpdate = now
     }
     try {
-      await globalLimit(() => archiveTasksWithRetry(taskIds, config))
-      grandTotal += batch.length
-      state.progress.archived += batch.length
+      await globalLimit(() => archiveTasksWithRetry([task.id], config))
+      grandTotal++
+      state.progress.archived++
       if (Date.now() - lastUpdate > 500) {
         updateState({})
         lastUpdate = Date.now()
       }
-      for (const task of batch) {
-        addLog(`  Archived [${label}] [${task.id}] ${task.title}`)
-      }
+      addLog(`  Archived [${label}] [${task.id}] ${task.title}`)
     } catch (e) {
-      addLog(`  ERROR [${label}] archiving batch: ${e.message}`)
+      addLog(`  ERROR [${label}] archiving task ${task.id}: ${e.message}`)
     }
   })
   return grandTotal

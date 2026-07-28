@@ -149,9 +149,9 @@ describe('Orchestrator Performance Optimization', () => {
 
     await sandbox.processTab(tab, options)
 
-    // Batching (ARCHIVE_BATCH_SIZE=50): 2 tasks fit in one batch -> one API call.
-    assert.strictEqual(archiveTasksCallCount, 1, 'archiveTasks should be called once per batch, not per task')
-    assert.strictEqual(totalArchived, 2, 'both tasks should be archived in the single batch call')
+    // Individual task calls: 2 tasks -> 2 API calls.
+    assert.strictEqual(archiveTasksCallCount, 2, 'archiveTasks should be called per task')
+    assert.strictEqual(totalArchived, 2, 'both tasks should be archived')
   })
 })
 
