@@ -215,7 +215,8 @@ function setupPopupSandbox() {
 
   const opModeButtons = [
     createMockElement('button', { dataset: { value: 'archive' } }),
-    createMockElement('button', { dataset: { value: 'suggestions' } })
+    createMockElement('button', { dataset: { value: 'suggestions' } }),
+    createMockElement('button', { dataset: { value: 'remove_suggestions' } })
   ]
 
   const document = createMockDocument(elements, opModeButtons, radioStates)
@@ -485,6 +486,26 @@ describe('updateOpModeUI details', () => {
     assert.strictEqual(elements['#startBtn'].textContent, 'Start Suggestions')
   })
 
+  it('should update startBtn text based on opMode and dryRun (Remove Suggestions/Dry)', () => {
+    const { sandbox, elements, radioStates } = setupPopupSandbox()
+    vm.runInContext(popupJs, sandbox)
+
+    radioStates.mode = 'dry'
+    sandbox.setActiveOpMode('remove_suggestions')
+    assert.strictEqual(elements['#startBtn'].textContent, 'Dry Run Remove Suggestions')
+    assert.strictEqual(sandbox.getRunningText(), '⏳ Dry Running Remove Suggestions...')
+  })
+
+  it('should update startBtn text based on opMode and dryRun (Remove Suggestions/Live)', () => {
+    const { sandbox, elements, radioStates } = setupPopupSandbox()
+    vm.runInContext(popupJs, sandbox)
+
+    radioStates.mode = 'live'
+    sandbox.setActiveOpMode('remove_suggestions')
+    assert.strictEqual(elements['#startBtn'].textContent, 'Remove Suggestions')
+    assert.strictEqual(sandbox.getRunningText(), '⏳ Running Remove Suggestions...')
+  })
+
   it('should NOT update startBtn text when button is disabled', () => {
     const { sandbox, elements, radioStates } = setupPopupSandbox()
     vm.runInContext(popupJs, sandbox)
@@ -506,17 +527,30 @@ describe('updateOpModeUI direct calls', () => {
     // Reset initial state
     opModeButtons[0].classList.toggle('active', false)
     opModeButtons[1].classList.toggle('active', false)
+    opModeButtons[2].classList.toggle('active', false)
 
     sandbox.updateOpModeUI('archive')
     assert.ok(opModeButtons[0].classList.contains('active'))
     assert.strictEqual(opModeButtons[0].getAttribute('aria-pressed'), 'true')
     assert.ok(!opModeButtons[1].classList.contains('active'))
     assert.strictEqual(opModeButtons[1].getAttribute('aria-pressed'), 'false')
+    assert.ok(!opModeButtons[2].classList.contains('active'))
+    assert.strictEqual(opModeButtons[2].getAttribute('aria-pressed'), 'false')
 
     sandbox.updateOpModeUI('suggestions')
     assert.ok(!opModeButtons[0].classList.contains('active'))
     assert.strictEqual(opModeButtons[0].getAttribute('aria-pressed'), 'false')
     assert.ok(opModeButtons[1].classList.contains('active'))
     assert.strictEqual(opModeButtons[1].getAttribute('aria-pressed'), 'true')
+    assert.ok(!opModeButtons[2].classList.contains('active'))
+    assert.strictEqual(opModeButtons[2].getAttribute('aria-pressed'), 'false')
+
+    sandbox.updateOpModeUI('remove_suggestions')
+    assert.ok(!opModeButtons[0].classList.contains('active'))
+    assert.strictEqual(opModeButtons[0].getAttribute('aria-pressed'), 'false')
+    assert.ok(!opModeButtons[1].classList.contains('active'))
+    assert.strictEqual(opModeButtons[1].getAttribute('aria-pressed'), 'false')
+    assert.ok(opModeButtons[2].classList.contains('active'))
+    assert.strictEqual(opModeButtons[2].getAttribute('aria-pressed'), 'true')
   })
 })

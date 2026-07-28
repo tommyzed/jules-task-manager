@@ -157,6 +157,7 @@ function buildBatchRequest(rpcId, payload, config) {
 
 async function callBatchExecute(rpcId, payload, config) {
   const { url, body } = buildBatchRequest(rpcId, payload, config)
+  console.log(`[DEBUG] callBatchExecute rpcId=${rpcId} payload=`, JSON.stringify(payload))
   try {
     const res = await jFetch(url, {
       method: 'POST',
@@ -167,8 +168,13 @@ async function callBatchExecute(rpcId, payload, config) {
       credentials: 'include',
       body
     })
-    return parseResponse(await res.text(), rpcId)
+    const rawText = await res.text()
+    console.log(`[DEBUG] callBatchExecute rpcId=${rpcId} status=${res.status} rawResponse(first 500)=`, rawText.substring(0, 500))
+    const parsed = parseResponse(rawText, rpcId)
+    console.log(`[DEBUG] callBatchExecute rpcId=${rpcId} parsedResult=`, JSON.stringify(parsed)?.substring(0, 500))
+    return parsed
   } catch (e) {
+    console.error(`[DEBUG] callBatchExecute rpcId=${rpcId} ERROR:`, e.message)
     throw new Error(`batchexecute ${rpcId} failed: ${e.message}`)
   }
 }
@@ -389,7 +395,10 @@ async function archiveTasks(taskIds, config) {
   const payload = new Array(2).fill(null)
   payload[TJMM5C.TASK_IDS] = taskIds
   payload[TJMM5C.ACTION] = 1
-  await callBatchExecute('Tjmm5c', payload, config)
+  console.log(`[DEBUG] archiveTasks sending IDs:`, taskIds, `payload:`, JSON.stringify(payload))
+  const result = await callBatchExecute('Tjmm5c', payload, config)
+  console.log(`[DEBUG] archiveTasks response for IDs`, taskIds, `=>`, JSON.stringify(result)?.substring(0, 500))
+  return result
 }
 
 const RETRY_ATTEMPTS = 4
@@ -416,6 +425,21 @@ async function withRetry(fn) {
 
 function archiveTasksWithRetry(taskIds, config) {
   return withRetry(() => archiveTasks(taskIds, config))
+}
+
+// Dismiss a single suggestion via sc1vFf (DismissSuggestion)
+const SC1VFf_ACTION = 2
+
+async function dismissSuggestion(suggestionId, config) {
+  const payload = [suggestionId, SC1VFf_ACTION]
+  console.log(`[DEBUG] dismissSuggestion ID=${suggestionId} payload=`, JSON.stringify(payload))
+  const result = await callBatchExecute('sc1vFf', payload, config)
+  console.log(`[DEBUG] dismissSuggestion ID=${suggestionId} result=`, JSON.stringify(result)?.substring(0, 500))
+  return result
+}
+
+function dismissSuggestionWithRetry(suggestionId, config) {
+  return withRetry(() => dismissSuggestion(suggestionId, config))
 }
 
 // =============================================================================
@@ -495,8 +519,12 @@ function parseSuggestion(raw) {
 }
 
 async function listSuggestions(repo, config) {
+  console.log(`[DEBUG] listSuggestions repo=${repo}`)
   const result = await callBatchExecute('hQP40d', [repo], config)
-  if (!result || !Array.isArray(result) || !Array.isArray(result[0])) return []
+  if (!result || !Array.isArray(result) || !Array.isArray(result[0])) {
+    console.log(`[DEBUG] listSuggestions repo=${repo} empty/invalid result`)
+    return []
+  }
 
   // ⚡ Bolt Optimization: Use a standard for loop instead of `.reduce()` to
   // avoid function call overhead per element and intermediate closure allocation.
@@ -506,6 +534,8 @@ async function listSuggestions(repo, config) {
     const parsed = parseSuggestion(arr[i])
     if (parsed) parsedSuggestions.push(parsed)
   }
+  console.log(`[DEBUG] listSuggestions repo=${repo} found ${parsedSuggestions.length} suggestions, IDs:`, parsedSuggestions.map((s) => s.id))
+  console.log(`[DEBUG] listSuggestions repo=${repo} statuses:`, parsedSuggestions.map((s) => ({ id: s.id, status: s.status, title: s.title })))
   return parsedSuggestions
 }
 
@@ -826,6 +856,103 @@ async function processSuggestionsForTab(tab, options) {
 
   addLog(`\n[${label}] TOTAL: ${totalStarted} suggestions started`)
   return totalStarted
+}
+
+async function processRemoveSuggestionsForTab(tab, options) {
+  const prepared = await prepareTab(tab)
+  if (!prepared) return 0
+  const { label, config } = prepared
+
+  addLog(`[${label}] Fetching Suggestions-enabled repos...`)
+  const repos = await safeListSources(label, config)
+  if (!repos) return 0
+
+  addLog(
+    `[${label}] ${repos.length} repo(s) with Suggestions enabled: ${repos.map((r) => r.replace(/^github\//, '')).join(', ')}`
+  )
+
+  let filteredRepos = repos
+  if (options.repoFilter) {
+    const filterLower = options.repoFilter.toLowerCase().trim()
+    filteredRepos = repos.filter((r) => {
+      const full = r.toLowerCase()
+      const display = r.replace(/^github\//, '').toLowerCase()
+      return full.includes(filterLower) || display.includes(filterLower)
+    })
+    addLog(
+      `[${label}] Filtered repos by "${options.repoFilter}": keeping ${filteredRepos.length} repo(s): ${filteredRepos.map((r) => r.replace(/^github\//, '')).join(', ')}`
+    )
+    if (filteredRepos.length === 0) {
+      addLog(`[${label}] No matching repos found. Nothing to do.`)
+      return 0
+    }
+  }
+
+  addLog(`\n[${label}] Fetching suggestions for ${filteredRepos.length} repos concurrently...`)
+  const allSuggestions = await runInPool(filteredRepos, PER_ACCOUNT_CONCURRENCY, (repo) =>
+    globalLimit(() => listSuggestions(repo, config))
+      .then((suggestions) => ({ repo, suggestions }))
+      .catch((e) => ({ repo, error: e.message }))
+  )
+
+  const work = []
+  const discoveryLogs = []
+  for (const { repo, suggestions, error } of allSuggestions) {
+    if (error) {
+      discoveryLogs.push(`\n[${label}] ERROR fetching suggestions for ${repo}: ${error}`)
+      continue
+    }
+    if (suggestions.length === 0) {
+      discoveryLogs.push(`\n[${label}] ${repo}: No suggestions found`)
+      continue
+    }
+    discoveryLogs.push(`\n[${label}] ${repo}: Found ${suggestions.length} suggestions`)
+    for (const s of suggestions) work.push({ repo, s })
+  }
+  if (discoveryLogs.length > 0) addLog(discoveryLogs.join(''))
+
+  if (work.length === 0) {
+    addLog(`\n[${label}] TOTAL: 0 suggestions removed`)
+    return 0
+  }
+
+  if (options.dryRun) {
+    addLog(`[${label}] DRY RUN - would remove ${work.length} suggestions`)
+    for (const { s } of work) {
+      addLog(`  [DRY] Would remove [${label}] ${s.title} (${s.categorySlug})`)
+    }
+    return 0
+  }
+
+  state.progress.total += work.length
+  updateState({})
+
+  let totalRemoved = 0
+  let lastUpdate = 0
+  await runInPool(work, PER_ACCOUNT_CONCURRENCY, async (item) => {
+    if (state.status === 'cancelled') return
+    console.log(`[DEBUG] processRemoveSuggestions dismissing ID=${item.s.id} title=${item.s.title}`)
+    const now = Date.now()
+    if (now - lastUpdate > 500) {
+      updateState({ currentRepo: item.repo.replace(/^github\//, '') })
+      lastUpdate = now
+    }
+    try {
+      await globalLimit(() => dismissSuggestionWithRetry(item.s.id, config))
+      totalRemoved++
+      state.progress.archived++
+      if (Date.now() - lastUpdate > 500) {
+        updateState({})
+        lastUpdate = Date.now()
+      }
+      addLog(`  Removed [${label}] ${item.s.title}`)
+    } catch (err) {
+      addLog(`  [!] Failed to remove suggestion "${item.s.title}": ${err.message}`)
+    }
+  })
+
+  addLog(`\n[${label}] TOTAL: ${totalRemoved} suggestions removed`)
+  return totalRemoved
 }
 
 // =============================================================================
@@ -1271,11 +1398,17 @@ function initOperationState(options) {
     error: null
   })
 
-  const isSuggestions = options.opMode === 'suggestions'
-  addLog(options.dryRun ? '=== DRY RUN MODE ===' : isSuggestions ? '=== SUGGESTIONS MODE ===' : '=== ARCHIVE MODE ===')
+  const modeHeader = options.dryRun
+    ? '=== DRY RUN MODE ==='
+    : options.opMode === 'suggestions'
+      ? '=== SUGGESTIONS MODE ==='
+      : options.opMode === 'remove_suggestions'
+        ? '=== REMOVE SUGGESTIONS MODE ==='
+        : '=== ARCHIVE MODE ==='
+  addLog(modeHeader)
   if (options.force) addLog('=== FORCE MODE (skip PR check) ===')
   addLog('=== v2: batchexecute API ===')
-  return isSuggestions
+  return options.opMode === 'suggestions'
 }
 
 async function discoverTabs(options) {
@@ -1295,14 +1428,21 @@ async function discoverTabs(options) {
   return tabs
 }
 
-async function processAllTabs(tabs, options, isSuggestions) {
+async function processAllTabs(tabs, options) {
   // Process accounts in parallel. Per-account pools and the shared global
   // limiter keep total in-flight requests bounded; results preserve tab order.
   return Promise.all(
     tabs.map(async (tab) => {
       const label = getTabLabel(tab)
       try {
-        const count = isSuggestions ? await processSuggestionsForTab(tab, options) : await processTab(tab, options)
+        let count = 0
+        if (options.opMode === 'suggestions') {
+          count = await processSuggestionsForTab(tab, options)
+        } else if (options.opMode === 'remove_suggestions') {
+          count = await processRemoveSuggestionsForTab(tab, options)
+        } else {
+          count = await processTab(tab, options)
+        }
         return { label, count }
       } catch (e) {
         addLog(`ERROR [${label}]: ${e.message}`)
@@ -1312,8 +1452,21 @@ async function processAllTabs(tabs, options, isSuggestions) {
   )
 }
 
-function finalizeOperation(results, isSuggestions) {
-  const verb = isSuggestions ? 'started' : 'archived'
+function finalizeOperation(results, optionsOrIsSuggestions) {
+  let verb = 'archived'
+  let itemLabel = 'tasks'
+  if (typeof optionsOrIsSuggestions === 'object' && optionsOrIsSuggestions !== null) {
+    if (optionsOrIsSuggestions.opMode === 'suggestions') {
+      verb = 'started'
+      itemLabel = 'suggestions'
+    } else if (optionsOrIsSuggestions.opMode === 'remove_suggestions') {
+      verb = 'removed'
+      itemLabel = 'suggestions'
+    }
+  } else if (optionsOrIsSuggestions) {
+    verb = 'started'
+  }
+
   addLog(`\n${'='.repeat(50)}`)
   addLog('SUMMARY')
   addLog(`${'='.repeat(50)}`)
@@ -1322,7 +1475,7 @@ function finalizeOperation(results, isSuggestions) {
     grand += r.count
     addLog(`  ${r.label}: ${r.err ? `ERROR: ${r.err}` : `${r.count} ${verb}`}`)
   })
-  addLog(`\n  GRAND TOTAL: ${grand} tasks ${verb}`)
+  addLog(`\n  GRAND TOTAL: ${grand} ${itemLabel} ${verb}`)
 
   updateState({ status: 'done', results })
 }
@@ -1334,14 +1487,14 @@ function handleOperationError(e) {
 }
 
 async function startOperation(options) {
-  const isSuggestions = initOperationState(options)
+  initOperationState(options)
 
   try {
     const tabs = await discoverTabs(options)
     if (!tabs) return
 
-    const results = await processAllTabs(tabs, options, isSuggestions)
-    finalizeOperation(results, isSuggestions)
+    const results = await processAllTabs(tabs, options)
+    finalizeOperation(results, options)
   } catch (e) {
     handleOperationError(e)
   } finally {

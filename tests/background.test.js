@@ -2188,3 +2188,95 @@ describe('processSuggestionsForTab repository filtering', () => {
     assert.ok(state.log.some((l) => l.includes('No matching repos found. Nothing to do.')))
   })
 })
+
+describe('processRemoveSuggestionsForTab', () => {
+  const TAB = { id: 1, url: 'https://jules.google.com/u/1/' }
+
+  function setupRemoveEnv(repos, suggestionsMap = {}) {
+    const { sandbox } = setupEnvironment()
+    sandbox.getTabConfig = async () => ({ at: 'at', bl: 'bl_v1', fsid: 'fsid', accountNum: '0' })
+    sandbox.safeListSources = async () => repos
+
+    const queriedRepos = []
+    const removedBatchIds = []
+
+    sandbox.listSuggestions = async (repo) => {
+      queriedRepos.push(repo)
+      return suggestionsMap[repo] || []
+    }
+
+    sandbox.dismissSuggestionWithRetry = async (id) => {
+      removedBatchIds.push(id)
+    }
+
+    return { sandbox, queriedRepos, removedBatchIds }
+  }
+
+  it('performs dry run without removing suggestions', async () => {
+    const repos = ['github/owner/repo1']
+    const suggestionsMap = {
+      'github/owner/repo1': [
+        { id: 'sug-1', title: 'Fix SQL injection', categorySlug: 'input-validation' },
+        { id: 'sug-2', title: 'Optimize loop', categorySlug: 'loop-optimization' }
+      ]
+    }
+    const { sandbox, removedBatchIds } = setupRemoveEnv(repos, suggestionsMap)
+    const count = await sandbox.processRemoveSuggestionsForTab(TAB, { opMode: 'remove_suggestions', dryRun: true })
+
+    assert.strictEqual(count, 0)
+    assert.strictEqual(removedBatchIds.length, 0)
+
+    const state = sandbox.test_state()
+    assert.ok(state.log.some((l) => l.includes('[DRY] Would remove [u/1] Fix SQL injection')))
+    assert.ok(state.log.some((l) => l.includes('[DRY] Would remove [u/1] Optimize loop')))
+  })
+
+  it('removes suggestions in batches during live run', async () => {
+    const repos = ['github/owner/repo1']
+    const suggestionsMap = {
+      'github/owner/repo1': [
+        { id: 'sug-1', title: 'Fix SQL injection', categorySlug: 'input-validation' },
+        { id: 'sug-2', title: 'Optimize loop', categorySlug: 'loop-optimization' }
+      ]
+    }
+    const { sandbox, removedBatchIds } = setupRemoveEnv(repos, suggestionsMap)
+    const count = await sandbox.processRemoveSuggestionsForTab(TAB, { opMode: 'remove_suggestions', dryRun: false })
+
+    assert.strictEqual(count, 2)
+    assert.deepStrictEqual(removedBatchIds, ['sug-1', 'sug-2'])
+
+    const state = sandbox.test_state()
+    assert.ok(state.log.some((l) => l.includes('Removed [u/1] Fix SQL injection')))
+    assert.ok(state.log.some((l) => l.includes('Removed [u/1] Optimize loop')))
+    assert.ok(state.log.some((l) => l.includes('TOTAL: 2 suggestions removed')))
+  })
+
+  it('filters repos by repoFilter when removing suggestions', async () => {
+    const repos = ['github/owner/repo1', 'github/owner/repo2']
+    const { sandbox, queriedRepos } = setupRemoveEnv(repos)
+    await sandbox.processRemoveSuggestionsForTab(TAB, { opMode: 'remove_suggestions', repoFilter: 'repo2' })
+
+    assert.deepStrictEqual(queriedRepos, ['github/owner/repo2'])
+  })
+
+  it('returns 0 if no suggestions found', async () => {
+    const repos = ['github/owner/repo1']
+    const { sandbox } = setupRemoveEnv(repos, { 'github/owner/repo1': [] })
+    const count = await sandbox.processRemoveSuggestionsForTab(TAB, { opMode: 'remove_suggestions', dryRun: false })
+
+    assert.strictEqual(count, 0)
+    const state = sandbox.test_state()
+    assert.ok(state.log.some((l) => l.includes('TOTAL: 0 suggestions removed')))
+  })
+
+  it('formats finalizeOperation summary with "removed" for remove_suggestions mode', () => {
+    const { sandbox } = setupEnvironment()
+    const results = [{ label: 'u/0', count: 5 }]
+    sandbox.finalizeOperation(results, { opMode: 'remove_suggestions' })
+
+    const state = sandbox.test_state()
+    assert.ok(state.log.some((l) => l.includes('u/0: 5 removed')))
+    assert.ok(state.log.some((l) => l.includes('GRAND TOTAL: 5 suggestions removed')))
+  })
+})
+

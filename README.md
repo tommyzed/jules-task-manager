@@ -60,6 +60,12 @@
 - **Category-aware prompts** -- generates tailored prompts per suggestion category (security fix, performance optimization, test coverage, code cleanup)
 - **Config capture** -- observes Jules UI to capture model config and experiment IDs for accurate reproduction
 
+### Remove Suggestions
+
+- **Bulk remove** -- dismiss/remove all unneeded code suggestions across your connected repositories in one click
+- **Repository filtering** -- optional filter to target specific repositories
+- **Fast batching** -- processes suggestion removals using batchexecute API (`Tjmm5c`) in efficient batches
+
 ### General
 
 - **Multi-account** -- processes all Jules tabs (`/u/0`, `/u/1`, etc.) automatically
@@ -81,7 +87,7 @@
 1. Open one or more `jules.google.com` tabs (supports multiple accounts)
 2. Click the extension icon in the toolbar
 3. Configure:
-   - **Operation** -- Archive Tasks or Start Suggestions
+   - **Operation** -- Archive Tasks, Start Suggestions, or Remove Suggestions
    - **GitHub Owner** -- your GitHub username (for PR checks in archive mode)
    - **GitHub Token** -- optional, for private repos
    - **Mode** -- Dry Run (preview) or Run (execute)

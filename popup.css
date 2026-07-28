@@ -101,7 +101,7 @@ input[type="password"]:focus {
 
 .segmented button {
   flex: 1;
-  padding: 6px 12px;
+  padding: 6px 6px;
   border: none;
   background: transparent;
   color: #94a3b8;

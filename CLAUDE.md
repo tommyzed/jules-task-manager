@@ -23,9 +23,10 @@ popup.js (UI) <-> background.js (batchexecute client) <-> content.js (token extr
                 chrome.storage.sync (settings)
 ```
 
-Two operation modes:
+Three operation modes:
 1. **Archive Tasks** -- ListTasks (p1Takd) -> check GitHub PRs -> ArchiveTask (Tjmm5c)
 2. **Start Suggestions** -- ListSources (YqkSHd) filtered to Suggestions-enabled repos -> ListSuggestions (hQP40d) per repo -> cap to remaining daily quota (KQOO7) -> StartSuggestion (Rja83d). Only repos whose per-repo Suggestions toggle is ON are touched; the daily session limit is never exceeded.
+3. **Remove Suggestions** -- ListSources (YqkSHd) filtered to Suggestions-enabled repos -> ListSuggestions (hQP40d) per repo -> ArchiveTask (Tjmm5c) in batches.
 
 Content script extracts auth tokens (SNlM0e, cfb2h, FdrFJe) from `WIZ_global_data` via MAIN world script injection. Also observes fetch() for Rja83d calls to capture model config and experiment IDs.
 

@@ -26,10 +26,11 @@ let opMode = 'archive'
 function getRunningText() {
   const modeRadio = document.querySelector('input[name="mode"]:checked')
   const isDry = modeRadio && modeRadio.value === 'dry'
-  const isArchive = opMode === 'archive'
 
-  if (isArchive) {
+  if (opMode === 'archive') {
     return isDry ? '⏳ Dry Running Archive...' : '⏳ Running Archive...'
+  } else if (opMode === 'remove_suggestions') {
+    return isDry ? '⏳ Dry Running Remove Suggestions...' : '⏳ Running Remove Suggestions...'
   } else {
     return isDry ? '⏳ Dry Running Suggestions...' : '⏳ Running Suggestions...'
   }
@@ -64,8 +65,10 @@ function updateOpModeUI(value) {
   if (!startBtn.disabled) {
     const modeRadio = document.querySelector('input[name="mode"]:checked')
     const isDry = modeRadio && modeRadio.value === 'dry'
-    if (isArchive) {
+    if (value === 'archive') {
       startBtn.textContent = isDry ? 'Dry Run Archive' : 'Start Archiving'
+    } else if (value === 'remove_suggestions') {
+      startBtn.textContent = isDry ? 'Dry Run Remove Suggestions' : 'Remove Suggestions'
     } else {
       startBtn.textContent = isDry ? 'Dry Run Suggestions' : 'Start Suggestions'
     }
