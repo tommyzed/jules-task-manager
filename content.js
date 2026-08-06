@@ -32,7 +32,7 @@ function isTrustedMessage(event) {
 // Listen for messages from MAIN world script
 window.addEventListener('message', (event) => {
   if (!isTrustedMessage(event)) return
-  if (event.data?.type === 'JULES_ARCHIVER_CONFIG') {
+  if (event.data?.type === 'JULES_MANAGER_CONFIG') {
     cachedConfig = event.data.config
   }
   if (event.data?.type === 'JULES_START_CONFIG') {
@@ -56,7 +56,7 @@ function extractConfig() {
 
     function handler(event) {
       if (!isTrustedMessage(event)) return
-      if (event.data?.type !== 'JULES_ARCHIVER_CONFIG') return
+      if (event.data?.type !== 'JULES_MANAGER_CONFIG') return
       window.removeEventListener('message', handler)
       clearTimeout(timeout)
       cachedConfig = event.data.config

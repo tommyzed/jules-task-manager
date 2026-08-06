@@ -1,5 +1,5 @@
 {
-  "name": "jules-task-archiver-tests",
+  "name": "jules-task-manager-tests",
   "version": "2.6.0",
   "description": "Tests for Jules Task Manager",
   "main": "background.js",

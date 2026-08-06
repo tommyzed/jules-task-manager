@@ -24,7 +24,7 @@ function setupSandbox(initialWizData = {}) {
       listeners[type].push(listener)
     },
     fetch: async () => ({ ok: true }),
-    __julesArchiver: undefined,
+    __julesManager: undefined,
     Date: {
       now: () => 1234567890
     },
@@ -68,7 +68,7 @@ describe('main-world.js', () => {
 
     assert.strictEqual(messages.length, 1)
     assert.strictEqual(messages[0].targetOrigin, 'https://jules.google.com')
-    assert.strictEqual(messages[0].data.type, 'JULES_ARCHIVER_CONFIG')
+    assert.strictEqual(messages[0].data.type, 'JULES_MANAGER_CONFIG')
     assert.strictEqual(messages[0].data.config.at, 'at-token')
     assert.strictEqual(messages[0].data.config.bl, 'bl-label')
     assert.strictEqual(messages[0].data.config.fsid, 'fsid-token')
@@ -139,7 +139,7 @@ describe('main-world.js', () => {
 
     assert.strictEqual(messages.length, 2)
     assert.strictEqual(messages[1].targetOrigin, 'https://jules.google.com')
-    assert.strictEqual(messages[1].data.type, 'JULES_ARCHIVER_CONFIG')
+    assert.strictEqual(messages[1].data.type, 'JULES_MANAGER_CONFIG')
   })
 
   it('should ignore JULES_REQUEST_CONFIG from a foreign origin', () => {

@@ -1,4 +1,4 @@
-# jules-task-archiver
+# jules-task-manager
 
 Chrome Extension (Manifest V3) for bulk operations on Jules tasks via batchexecute API.
 

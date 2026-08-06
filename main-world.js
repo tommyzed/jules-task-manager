@@ -15,7 +15,7 @@ function broadcastConfig() {
 
   window.postMessage(
     {
-      type: 'JULES_ARCHIVER_CONFIG',
+      type: 'JULES_MANAGER_CONFIG',
       config: w
         ? {
             at: w.SNlM0e || null,
@@ -31,8 +31,8 @@ function broadcastConfig() {
 }
 
 // Install fetch observer for StartSuggestion config capture (once)
-if (!window.__julesArchiver) {
-  window.__julesArchiver = true
+if (!window.__julesManager) {
+  window.__julesManager = true
 
   const _origFetch = window.fetch
   window.fetch = async function (...args) {

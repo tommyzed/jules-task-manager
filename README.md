@@ -2,7 +2,7 @@
 
 **Chrome Extension for bulk operations on Jules tasks via batchexecute API -- archive tasks and start code suggestions at scale.**
 
-[![CI](https://github.com/n24q02m/jules-task-archiver/actions/workflows/ci.yml/badge.svg)](https://github.com/n24q02m/jules-task-archiver/actions/workflows/ci.yml)
+[![CI](https://github.com/n24q02m/jules-task-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/n24q02m/jules-task-manager/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Renovate](https://img.shields.io/badge/renovate-enabled-brightgreen.svg)](https://renovatebot.com)
 [![semantic-release](https://img.shields.io/badge/semantic--release-conventionalcommits-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
@@ -20,7 +20,7 @@
 | [better-telegram-mcp](https://github.com/n24q02m/better-telegram-mcp) | Telegram for AI agents -- messages, chats, media, and contacts across both bo... | MCP |
 | [claude-plugins](https://github.com/n24q02m/claude-plugins) | Claude Code plugin marketplace for the n24q02m MCP servers -- install web sea... | Marketplace |
 | [imagine-mcp](https://github.com/n24q02m/imagine-mcp) | Image and video understanding + generation for AI agents -- across Gemini, Op... | MCP |
-| [jules-task-archiver](https://github.com/n24q02m/jules-task-archiver) | Chrome Extension for bulk operations on Jules tasks via batchexecute API -- a... | Tooling |
+| [jules-task-manager](https://github.com/n24q02m/jules-task-manager) | Chrome Extension for bulk operations on Jules tasks via batchexecute API -- a... | Tooling |
 | [mcp-core](https://github.com/n24q02m/mcp-core) | Shared foundation for building MCP servers -- Streamable HTTP transport, OAut... | MCP |
 | [mnemo-mcp](https://github.com/n24q02m/mnemo-mcp) | Persistent AI memory with hybrid search and embedded sync. Open, free, unlimi... | MCP |
 | [qwen3-embed](https://github.com/n24q02m/qwen3-embed) | Lightweight Qwen3 text embedding and reranking via ONNX Runtime and GGUF | Library |
@@ -76,7 +76,7 @@
 
 ## Installation
 
-1. Download the latest `jules-task-archiver.zip` from [Releases](../../releases)
+1. Download the latest `jules-task-manager.zip` from [Releases](../../releases)
 2. Extract the zip
 3. Open `chrome://extensions` in Chrome
 4. Enable **Developer mode** (top right toggle)

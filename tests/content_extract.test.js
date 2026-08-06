@@ -135,7 +135,7 @@ describe('content.js extractConfig', () => {
     assert.deepStrictEqual(normalize(sandbox.getLastPostMessage()), { type: 'JULES_REQUEST_CONFIG' })
 
     // Simulate response from main world
-    sandbox.fireMessage({ type: 'JULES_ARCHIVER_CONFIG', config: newConfig })
+    sandbox.fireMessage({ type: 'JULES_MANAGER_CONFIG', config: newConfig })
 
     const result = await promise
     assert.deepStrictEqual(normalize(result), newConfig)
@@ -155,7 +155,7 @@ describe('content.js extractConfig', () => {
     assert.strictEqual(sandbox.wasPostMessageCalled(), true, 'Should have called postMessage for old cache')
 
     // Simulate response
-    sandbox.fireMessage({ type: 'JULES_ARCHIVER_CONFIG', config: newConfig })
+    sandbox.fireMessage({ type: 'JULES_MANAGER_CONFIG', config: newConfig })
 
     const result = await promise
     assert.deepStrictEqual(normalize(result), newConfig)
@@ -174,7 +174,7 @@ describe('content.js extractConfig', () => {
     assert.strictEqual(sandbox.wasPostMessageCalled(), true, 'Should have called postMessage when timestamp is missing')
 
     // Simulate response
-    sandbox.fireMessage({ type: 'JULES_ARCHIVER_CONFIG', config: newConfig })
+    sandbox.fireMessage({ type: 'JULES_MANAGER_CONFIG', config: newConfig })
 
     const result = await promise
     assert.deepStrictEqual(normalize(result), newConfig)
@@ -213,16 +213,16 @@ describe('content.js extractConfig', () => {
     const promise = sandbox.extractConfig()
 
     // Untrusted origin
-    sandbox.fireMessage({ type: 'JULES_ARCHIVER_CONFIG', config: { at: 'evil' } }, 'https://evil.com')
+    sandbox.fireMessage({ type: 'JULES_MANAGER_CONFIG', config: { at: 'evil' } }, 'https://evil.com')
     // Untrusted source
-    sandbox.fireMessage({ type: 'JULES_ARCHIVER_CONFIG', config: { at: 'evil' } }, 'https://jules.google.com', {})
+    sandbox.fireMessage({ type: 'JULES_MANAGER_CONFIG', config: { at: 'evil' } }, 'https://jules.google.com', {})
 
     // Message type mismatch
     sandbox.fireMessage({ type: 'OTHER_TYPE', config: { at: 'wrong' } })
 
     // Valid message should still work after noise
     const validConfig = { at: 'valid', timestamp: Date.now() }
-    sandbox.fireMessage({ type: 'JULES_ARCHIVER_CONFIG', config: validConfig })
+    sandbox.fireMessage({ type: 'JULES_MANAGER_CONFIG', config: validConfig })
 
     const result = await promise
     assert.deepStrictEqual(normalize(result), validConfig)

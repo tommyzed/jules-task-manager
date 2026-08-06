@@ -2,7 +2,7 @@
   "name": "Main Ruleset",
   "target": "branch",
   "source_type": "Repository",
-  "source": "n24q02m/jules-task-archiver",
+  "source": "n24q02m/jules-task-manager",
   "enforcement": "active",
   "conditions": {
     "ref_name": {

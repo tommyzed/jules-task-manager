@@ -104,7 +104,7 @@ jobs:
 
       - name: Package extension zip
         run: |
-          zip -r jules-task-archiver.zip \
+          zip -r jules-task-manager.zip \
             manifest.json \
             background.js \
             content.js \
@@ -120,4 +120,4 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           TAG: ${{ needs.release.outputs.tag }}
         run: |
-          gh release upload "$TAG" jules-task-archiver.zip --clobber
+          gh release upload "$TAG" jules-task-manager.zip --clobber
