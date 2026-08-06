@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Jules Task Manager",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "Bulk archive tasks, start code suggestions, and remove suggestions on Jules via batchexecute API",
   "permissions": [
     "storage",
