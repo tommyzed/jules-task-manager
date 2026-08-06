@@ -2,25 +2,6 @@
 
 **Chrome Extension for bulk operations on Jules tasks via batchexecute API -- archive tasks, start code suggestions, and remove suggestions at scale.**
 
-[![CI](https://github.com/n24q02m/jules-task-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/n24q02m/jules-task-manager/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Renovate](https://img.shields.io/badge/renovate-enabled-brightgreen.svg)](https://renovatebot.com)
-[![semantic-release](https://img.shields.io/badge/semantic--release-conventionalcommits-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
-
-## Table of contents
-
-- [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-- [How It Works](#how-it-works)
-- [Permissions](#permissions)
-- [Development](#development)
-- [Related Projects](#related-projects)
-- [Contributing](#contributing)
-- [License](#license)
-
-
-
 ## Features
 
 ### Archive Tasks
