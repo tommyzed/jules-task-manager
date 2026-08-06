@@ -35,9 +35,9 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 ### Testing
 
 1. Load the extension unpacked in Chrome/Brave
-2. Open one or more `jules.google.com` tabs
+2. Open a `jules.google.com` tab
 3. Test both Dry Run and Archive modes
-4. Verify multi-account support (`/u/0`, `/u/1`, etc.)
+4. Verify operation on active Jules tab (`/u/0`, `/u/1`, etc.)
 
 ## Pull Requests
 

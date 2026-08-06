@@ -68,7 +68,7 @@
 
 ### General
 
-- **Multi-account** -- processes all Jules tabs (`/u/0`, `/u/1`, etc.) automatically
+- **Current tab focus** -- operates on the active Jules tab (`/u/0`, `/u/1`, etc.)
 - **Dry run mode** -- preview what would happen without making changes
 - **batchexecute API** -- direct HTTP calls, no DOM automation, 10x faster than UI clicks
 - **Live progress** -- real-time log and progress bar in popup UI
@@ -84,7 +84,7 @@
 
 ## Usage
 
-1. Open one or more `jules.google.com` tabs (supports multiple accounts)
+1. Open a `jules.google.com` tab
 2. Click the extension icon in the toolbar
 3. Configure:
    - **Operation** -- Archive Tasks, Start Suggestions, or Remove Suggestions
@@ -129,7 +129,7 @@ popup.js (UI) <-> background.js (batchexecute client) <-> content.js (message re
 | Permission | Why |
 |-----------|-----|
 | `storage` | Save settings and operation state |
-| `tabs` | Query all Jules tabs for multi-account support |
+| `tabs` | Access active tab to target current Jules session |
 | `scripting` | Inject content script into pre-existing tabs |
 | `jules.google.com` | Content script for token extraction |
 | `api.github.com` | Check open PRs via GitHub REST API |
