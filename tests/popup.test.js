@@ -442,6 +442,16 @@ describe('popup.html accessibility', () => {
     assert.ok(popupHtml.includes('id="execModeLabel"'), 'execModeLabel should exist')
     assert.ok(popupHtml.includes('<legend id="execModeLabel">'), 'mode group should use legend')
   })
+
+  it('should include Ego/dev/null author link pointing to https://www.egodevnull.com/', () => {
+    assert.ok(popupHtml.includes('href="https://www.egodevnull.com/"'), 'author link href should point to egodevnull.com')
+    assert.ok(popupHtml.includes('Ego/dev/null'), 'author link text should contain Ego/dev/null')
+  })
+
+  it('should include Ko-fi coffee icon link pointing to https://ko-fi.com/egodevnull', () => {
+    assert.ok(popupHtml.includes('href="https://ko-fi.com/egodevnull"'), 'coffee link href should point to ko-fi')
+    assert.ok(popupHtml.includes('class="coffee-icon"'), 'coffee icon SVG should be rendered')
+  })
 })
 
 describe('updateOpModeUI details', () => {

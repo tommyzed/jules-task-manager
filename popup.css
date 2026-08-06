@@ -24,6 +24,31 @@ header {
   border-bottom: 1px solid #2d2d4a;
 }
 
+.header-title-group {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.header-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.header-links a {
+  color: #ff2a8d;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.header-links a:hover {
+  color: #ff69b4;
+  text-decoration: underline;
+}
+
 h1 {
   font-size: 15px;
   font-weight: 600;
@@ -74,7 +99,7 @@ input[type="password"] {
 
 input[type="text"]:focus,
 input[type="password"]:focus {
-  border-color: #4ade80;
+  border-color: #ff2a8d;
 }
 
 .hint {
@@ -115,7 +140,7 @@ input[type="password"]:focus {
 }
 
 .segmented button.active {
-  background: #4ade80;
+  background: #ff2a8d;
   color: #0f172a;
   font-weight: 600;
 }
@@ -138,12 +163,12 @@ input[type="password"]:focus {
 
 input[type="radio"],
 input[type="checkbox"] {
-  accent-color: #4ade80;
+  accent-color: #ff2a8d;
 }
 
 button:focus-visible,
 input:focus-visible {
-  outline: 2px solid #4ade80;
+  outline: 2px solid #ff2a8d;
   outline-offset: 2px;
 }
 
@@ -151,7 +176,7 @@ button.primary {
   display: block;
   width: 100%;
   padding: 8px;
-  background: #4ade80;
+  background: #ff2a8d;
   color: #0f172a;
   border: none;
   border-radius: 6px;
@@ -165,7 +190,7 @@ button.primary {
 }
 
 button.primary:hover {
-  background: #22c55e;
+  background: #e01f78;
 }
 
 button.primary:active:not(:disabled) {
@@ -179,7 +204,7 @@ button.primary:disabled {
 }
 
 button.primary:disabled[aria-busy="true"] {
-  background: rgba(74, 222, 128, 0.7);
+  background: rgba(255, 42, 141, 0.7);
   color: #0f172a;
   cursor: wait;
 }
@@ -221,7 +246,7 @@ button.secondary:hover {
 
 .progress-fill {
   height: 100%;
-  background: #4ade80;
+  background: #ff2a8d;
   border-radius: 2px;
   width: 0%;
   transition: width 0.3s ease;
@@ -248,7 +273,7 @@ button.secondary:hover {
 }
 
 .summary .total {
-  color: #4ade80;
+  color: #ff2a8d;
   font-weight: 600;
   margin-top: 4px;
   padding-top: 4px;
@@ -261,4 +286,26 @@ button.secondary:hover {
 
 .summary .skipped {
   color: #fbbf24;
+}
+
+.coffee-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff2a8d;
+  padding: 2px;
+  border-radius: 4px;
+  transition: transform 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.coffee-link:hover {
+  color: #ff69b4;
+  background: rgba(255, 42, 141, 0.15);
+  transform: scale(1.1);
+  text-decoration: none;
+}
+
+.coffee-icon {
+  width: 16px;
+  height: 16px;
 }
