@@ -20,7 +20,7 @@
 | [better-telegram-mcp](https://github.com/n24q02m/better-telegram-mcp) | Telegram for AI agents -- messages, chats, media, and contacts across both bo... | MCP |
 | [claude-plugins](https://github.com/n24q02m/claude-plugins) | Claude Code plugin marketplace for the n24q02m MCP servers -- install web sea... | Marketplace |
 | [imagine-mcp](https://github.com/n24q02m/imagine-mcp) | Image and video understanding + generation for AI agents -- across Gemini, Op... | MCP |
-| [jules-task-manager](https://github.com/n24q02m/jules-task-manager) | Chrome Extension for bulk operations on Jules tasks via batchexecute API -- a... | Tooling |
+| [jules-task-archiver](https://github.com/n24q02m/jules-task-archiver) | Chrome Extension for bulk operations on Jules tasks via batchexecute API -- a... | Tooling |
 | [mcp-core](https://github.com/n24q02m/mcp-core) | Shared foundation for building MCP servers -- Streamable HTTP transport, OAut... | MCP |
 | [mnemo-mcp](https://github.com/n24q02m/mnemo-mcp) | Persistent AI memory with hybrid search and embedded sync. Open, free, unlimi... | MCP |
 | [qwen3-embed](https://github.com/n24q02m/qwen3-embed) | Lightweight Qwen3 text embedding and reranking via ONNX Runtime and GGUF | Library |
@@ -156,6 +156,10 @@ Check out these MCP servers for AI-powered development:
 - [wet-mcp](https://github.com/n24q02m/wet-mcp) -- Web search, extract, and media MCP server
 - [better-notion-mcp](https://github.com/n24q02m/better-notion-mcp) -- Notion API MCP server
 - [mnemo-mcp](https://github.com/n24q02m/mnemo-mcp) -- Persistent AI memory MCP server
+
+## Credits & Acknowledgments
+
+Special thanks to the original upstream repository [jules-task-archiver](https://github.com/n24q02m/jules-task-archiver) by [n24q02m](https://github.com/n24q02m) for establishing the core foundation for bulk task management on Jules.
 
 ## Contributing
 
