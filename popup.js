@@ -135,22 +135,17 @@ startBtn.addEventListener('click', async () => {
   })
 
   const mode = document.querySelector('input[name="mode"]:checked').value
-  const scope = document.querySelector('input[name="scope"]:checked').value
 
-  // Get active tab for "current" scope
-  let activeTabId = null
-  if (scope === 'current') {
-    const [tab] = await chrome.tabs.query({
-      active: true,
-      currentWindow: true
-    })
-    activeTabId = tab?.id
-  }
+  // Get active tab
+  const [tab] = await chrome.tabs.query({
+    active: true,
+    currentWindow: true
+  })
+  const activeTabId = tab?.id
 
   const options = {
     dryRun: mode === 'dry',
     force: forceCheckbox.checked,
-    scope,
     activeTabId,
     opMode,
     repoFilter: repoFilterInput.value.trim()
@@ -245,7 +240,7 @@ function renderSummary(results) {
     const emptyDiv = document.createElement('div')
     emptyDiv.className = 'hint'
     emptyDiv.style.marginTop = '4px'
-    emptyDiv.textContent = 'No items were processed. Try checking your scope or if tasks exist.'
+    emptyDiv.textContent = 'No items were processed. Try checking if tasks exist.'
     summaryDiv.appendChild(emptyDiv)
     return
   }

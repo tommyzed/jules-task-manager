@@ -1476,7 +1476,7 @@ describe('startOperation refactoring', () => {
       { id: 1, url: 'https://jules.google.com/u/0/session' },
       { id: 2, url: 'https://jules.google.com/u/1/session' }
     ]
-    const tabs = await sandbox.test_discoverTabs({ scope: 'current', activeTabId: 2 })
+    const tabs = await sandbox.test_discoverTabs({ activeTabId: 2 })
 
     assert.strictEqual(tabs.length, 1)
     assert.strictEqual(tabs[0].id, 2)

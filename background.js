@@ -1410,7 +1410,7 @@ function initOperationState(options) {
 async function discoverTabs(options) {
   let tabs = await getJulesTabs()
 
-  if (options.scope === 'current' && options.activeTabId) {
+  if (options.activeTabId) {
     tabs = tabs.filter((t) => t.id === options.activeTabId)
   }
 

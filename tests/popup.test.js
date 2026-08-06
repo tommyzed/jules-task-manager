@@ -41,11 +41,9 @@ function createMockElement(tag = 'div', attrs = {}) {
       if (!element.listeners[type]) element.listeners[type] = []
       element.listeners[type].push(cb)
     },
-    dispatchEvent: (type) => {
+    dispatchEvent: async (type) => {
       if (element.listeners?.[type]) {
-        element.listeners[type].forEach((cb) => {
-          cb({ target: element })
-        })
+        await Promise.all(element.listeners[type].map((cb) => cb({ target: element })))
       }
     },
     style: { display: '' },
@@ -160,7 +158,6 @@ function createMockDocument(elements, opModeButtons, radioStates) {
   return {
     querySelector: (sel) => {
       if (sel === 'input[name="mode"]:checked') return { value: radioStates.mode }
-      if (sel === 'input[name="scope"]:checked') return { value: radioStates.scope }
       if (elements[sel]) return elements[sel]
       return createMockElement()
     },
@@ -185,7 +182,7 @@ function setupPopupSandbox() {
   const syncStorage = {}
   const localStorage = {}
   const sessionStorage = {}
-  const radioStates = { mode: 'dry', scope: 'all' }
+  const radioStates = { mode: 'dry' }
   const listeners = {
     storage: [],
     runtime: []
@@ -334,7 +331,7 @@ describe('renderSummary', () => {
     assert.strictEqual(summaryDiv.children[0].className, 'hint')
     assert.strictEqual(
       summaryDiv.children[0].textContent,
-      'No items were processed. Try checking your scope or if tasks exist.'
+      'No items were processed. Try checking if tasks exist.'
     )
   })
 
@@ -444,8 +441,6 @@ describe('popup.html accessibility', () => {
   it('should use explicit visible labels for groups using legend', () => {
     assert.ok(popupHtml.includes('id="execModeLabel"'), 'execModeLabel should exist')
     assert.ok(popupHtml.includes('<legend id="execModeLabel">'), 'mode group should use legend')
-    assert.ok(popupHtml.includes('id="scopeLabel"'), 'scopeLabel should exist')
-    assert.ok(popupHtml.includes('<legend id="scopeLabel">'), 'scope group should use legend')
   })
 })
 
