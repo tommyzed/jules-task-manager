@@ -106,6 +106,14 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       })
       return true // async response
 
+    case 'GET_CODEBASES': {
+      const codebases = Array.from(document.querySelectorAll('.source-row.clickable-row.unadded-source'))
+        .map(el => el.textContent.trim())
+        .filter(Boolean)
+      sendResponse({ codebases })
+      break
+    }
+
     default:
       sendResponse({ error: 'Unknown action' })
   }

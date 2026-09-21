@@ -61,9 +61,10 @@
     </div>
     <div class="setting-row">
       <label for="repoFilter">
-        Repository Filter <span class="hint" id="repoFilterHint">(optional, e.g. adventures or owner/repo)</span>
-        <input type="text" id="repoFilter" placeholder="e.g. tommyzed/adventures" spellcheck="false"
-          aria-describedby="repoFilterHint" />
+        Repository Filter <span class="hint" id="repoFilterHint">(optional, select codebase)</span>
+        <select id="repoFilter" aria-describedby="repoFilterHint">
+          <option value="">-- All Repositories --</option>
+        </select>
       </label>
     </div>
   </section>

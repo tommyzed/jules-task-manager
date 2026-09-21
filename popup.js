@@ -91,10 +91,12 @@ document.querySelectorAll('input[name="mode"]').forEach((radio) => {
   })
 })
 
-// --- Load saved settings & cleanup insecure storage ---
 chrome.storage.sync.get(['ghOwner', 'opMode', 'ghToken', 'repoFilter'], (syncData) => {
   if (syncData.ghOwner) ghOwnerInput.value = syncData.ghOwner
-  if (syncData.repoFilter) repoFilterInput.value = syncData.repoFilter
+  if (syncData.repoFilter) {
+    repoFilterInput.dataset.savedValue = syncData.repoFilter
+    repoFilterInput.value = syncData.repoFilter
+  }
   if (syncData.opMode) {
     setActiveOpMode(syncData.opMode)
   }
@@ -111,6 +113,45 @@ chrome.storage.sync.get(['ghOwner', 'opMode', 'ghToken', 'repoFilter'], (syncDat
     if (localData.ghToken) ghTokenInput.value = localData.ghToken
   })
 })
+
+async function populateCodebases() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+  if (!tab?.id) return
+
+  chrome.tabs.sendMessage(tab.id, { action: 'GET_CODEBASES' }, (response) => {
+    if (chrome.runtime.lastError) return
+    
+    if (response?.codebases) {
+      const currentValue = repoFilterInput.dataset.savedValue || repoFilterInput.value
+      
+      // Clear options except the first one
+      while (repoFilterInput.options.length > 1) {
+        repoFilterInput.remove(1)
+      }
+      
+      let foundSaved = false
+      for (const cb of response.codebases) {
+        const opt = document.createElement('option')
+        opt.value = cb
+        opt.textContent = cb
+        repoFilterInput.appendChild(opt)
+        if (cb === currentValue) foundSaved = true
+      }
+      
+      if (currentValue && !foundSaved) {
+        const opt = document.createElement('option')
+        opt.value = currentValue
+        opt.textContent = currentValue + ' (Saved)'
+        repoFilterInput.appendChild(opt)
+      }
+      
+      if (currentValue) {
+        repoFilterInput.value = currentValue
+      }
+    }
+  })
+}
+populateCodebases()
 // --- Save settings on change ---
 ghOwnerInput.addEventListener('change', () => {
   chrome.storage.sync.set({ ghOwner: ghOwnerInput.value.trim() })
