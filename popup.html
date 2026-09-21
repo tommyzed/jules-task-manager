@@ -11,7 +11,7 @@
   <header>
     <div class="header-title-group">
       <h1>Jules Task Manager</h1>
-      <span class="version">v2.3</span>
+      <span class="version">v2.4</span>
     </div>
     <div class="header-links">
       <span class="author">by <a href="https://www.egodevnull.com/" target="_blank"
@@ -52,14 +52,6 @@
       </fieldset>
     </div>
     <div class="setting-row">
-      <label class="checkbox">
-        <input type="checkbox" id="force" aria-describedby="forceHint" />
-        Force
-      </label>
-      <span class="hint" id="forceHint" style="display: block; margin-left: 20px; margin-top: 2px;">Archive every task,
-        ignoring state and matching open Pull Requests</span>
-    </div>
-    <div class="setting-row">
       <label for="repoFilter">
         Repository Filter <span class="hint" id="repoFilterHint">(optional, select codebase)</span>
         <select id="repoFilter" aria-describedby="repoFilterHint">
@@ -69,19 +61,7 @@
     </div>
   </section>
 
-  <section class="settings">
-    <h2>Settings</h2>
-    <label for="ghOwner">
-      GitHub Owner <span class="hint" id="ghOwnerHint">(optional, used for PR checks)</span>
-      <input type="text" id="ghOwner" placeholder="your-github-username" spellcheck="false" autocomplete="username"
-        aria-describedby="ghOwnerHint" />
-    </label>
-    <label for="ghToken">
-      GitHub Token <span class="hint" id="ghTokenHint">(optional, for private repos)</span>
-      <input type="password" id="ghToken" placeholder="ghp_..." spellcheck="false" autocomplete="current-password"
-        aria-describedby="ghTokenHint" />
-    </label>
-  </section>
+
 
   <button type="button" id="startBtn" class="primary">Start Archiving</button>
   <button type="button" id="resetBtn" class="secondary" style="display: none">Reset</button>

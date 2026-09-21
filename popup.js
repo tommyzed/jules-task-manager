@@ -7,9 +7,6 @@
 const $ = (sel) => document.querySelector(sel)
 
 // --- DOM refs ---
-const ghOwnerInput = $('#ghOwner')
-const ghTokenInput = $('#ghToken')
-const forceCheckbox = $('#force')
 const repoFilterInput = $('#repoFilter')
 const startBtn = $('#startBtn')
 const resetBtn = $('#resetBtn')
@@ -49,18 +46,6 @@ function updateOpModeUI(value) {
     b.setAttribute('aria-pressed', String(isActive))
   })
 
-  // Progressive disclosure: hide archive-specific settings
-  const isArchive = value === 'archive'
-  const settingsSection = document.querySelector('.settings')
-  const forceCheckboxContainer = forceCheckbox.closest('.setting-row')
-
-  if (settingsSection) {
-    settingsSection.style.display = isArchive ? 'block' : 'none'
-  }
-  if (forceCheckboxContainer) {
-    forceCheckboxContainer.style.display = isArchive ? 'block' : 'none'
-  }
-
   // Context-aware start button text
   if (!startBtn.disabled) {
     const modeRadio = document.querySelector('input[name="mode"]:checked')
@@ -91,8 +76,7 @@ document.querySelectorAll('input[name="mode"]').forEach((radio) => {
   })
 })
 
-chrome.storage.sync.get(['ghOwner', 'opMode', 'ghToken', 'repoFilter'], (syncData) => {
-  if (syncData.ghOwner) ghOwnerInput.value = syncData.ghOwner
+chrome.storage.sync.get(['opMode', 'repoFilter'], (syncData) => {
   if (syncData.repoFilter) {
     repoFilterInput.dataset.savedValue = syncData.repoFilter
     repoFilterInput.value = syncData.repoFilter
@@ -100,18 +84,6 @@ chrome.storage.sync.get(['ghOwner', 'opMode', 'ghToken', 'repoFilter'], (syncDat
   if (syncData.opMode) {
     setActiveOpMode(syncData.opMode)
   }
-
-  // Cleanup legacy insecure storage of token in sync
-  if (syncData.ghToken) {
-    chrome.storage.local.set({ ghToken: syncData.ghToken }, () => {
-      chrome.storage.sync.remove('ghToken')
-    })
-    ghTokenInput.value = syncData.ghToken
-  }
-
-  chrome.storage.local.get(['ghToken'], (localData) => {
-    if (localData.ghToken) ghTokenInput.value = localData.ghToken
-  })
 })
 
 async function populateCodebases() {
@@ -120,15 +92,15 @@ async function populateCodebases() {
 
   chrome.tabs.sendMessage(tab.id, { action: 'GET_CODEBASES' }, (response) => {
     if (chrome.runtime.lastError) return
-    
+
     if (response?.codebases) {
       const currentValue = repoFilterInput.dataset.savedValue || repoFilterInput.value
-      
+
       // Clear options except the first one
       while (repoFilterInput.options.length > 1) {
         repoFilterInput.remove(1)
       }
-      
+
       let foundSaved = false
       for (const cb of response.codebases) {
         const opt = document.createElement('option')
@@ -137,42 +109,31 @@ async function populateCodebases() {
         repoFilterInput.appendChild(opt)
         if (cb === currentValue) foundSaved = true
       }
-      
+
       if (currentValue && !foundSaved) {
         const opt = document.createElement('option')
         opt.value = currentValue
         opt.textContent = currentValue + ' (Saved)'
         repoFilterInput.appendChild(opt)
       }
-      
+
       if (currentValue) {
         repoFilterInput.value = currentValue
       }
     }
   })
 }
+
 populateCodebases()
 // --- Save settings on change ---
-ghOwnerInput.addEventListener('change', () => {
-  chrome.storage.sync.set({ ghOwner: ghOwnerInput.value.trim() })
-})
 repoFilterInput.addEventListener('change', () => {
   chrome.storage.sync.set({ repoFilter: repoFilterInput.value.trim() })
-})
-ghTokenInput.addEventListener('change', () => {
-  chrome.storage.local.set({ ghToken: ghTokenInput.value.trim() })
 })
 
 // --- Start operation ---
 startBtn.addEventListener('click', async () => {
-  // Save settings first, ensuring token is only in local storage
   chrome.storage.sync.set({
-    ghOwner: ghOwnerInput.value.trim(),
     repoFilter: repoFilterInput.value.trim()
-  })
-  chrome.storage.sync.remove('ghToken')
-  chrome.storage.local.set({
-    ghToken: ghTokenInput.value.trim()
   })
 
   const mode = document.querySelector('input[name="mode"]:checked').value
@@ -186,7 +147,7 @@ startBtn.addEventListener('click', async () => {
 
   const options = {
     dryRun: mode === 'dry',
-    force: forceCheckbox.checked,
+    force: true,
     activeTabId,
     opMode,
     repoFilter: repoFilterInput.value.trim()

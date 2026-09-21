@@ -959,60 +959,6 @@ async function processRemoveSuggestionsForTab(tab, options) {
 }
 
 // =============================================================================
-// GitHub PR Check — task-level matching
-// =============================================================================
-
-const prCache = new Map()
-
-async function getOpenPRs(owner, repo, token) {
-  const key = `${owner}/${repo}`
-  if (prCache.has(key)) return prCache.get(key)
-
-  try {
-    if (typeof owner !== 'string' || typeof repo !== 'string') {
-      throw new Error('Owner and repo must be strings')
-    }
-
-    const url = new URL(`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls`)
-    url.searchParams.set('state', 'open')
-    url.searchParams.set('per_page', '100')
-
-    const res = await jFetch(url.toString(), {
-      headers: { Accept: 'application/vnd.github+json' },
-      token
-    })
-    const prs = await res.json()
-    const mapped = prs.map((pr) => ({
-      title: pr.title || '',
-      titleLower: (pr.title || '').toLowerCase(),
-      branch: pr.head?.ref || ''
-    }))
-    prCache.set(key, mapped)
-    return mapped
-  } catch (e) {
-    addLog(`  WARNING: Could not check PRs for ${key}: ${e.message}`)
-    prCache.set(key, [])
-    return []
-  }
-}
-
-// ⚡ Bolt Optimization: Replace `.some()` with a standard for loop to avoid
-// closure allocation overhead in this hot path called for every task.
-function taskHasOpenPR(task, openPRs) {
-  if (openPRs.length === 0) return false
-  const taskTitle = (task.title || '').toLowerCase()
-  if (!taskTitle || taskTitle === '(untitled)') return false
-
-  for (let i = 0; i < openPRs.length; i++) {
-    const pr = openPRs[i]
-    if (pr.titleLower.includes(taskTitle) || taskTitle.includes(pr.titleLower)) {
-      return true
-    }
-  }
-  return false
-}
-
-// =============================================================================
 // State Management (unchanged from v1)
 // =============================================================================
 
@@ -1230,55 +1176,8 @@ async function getTabConfig(tabId) {
 // =============================================================================
 
 async function filterArchivableTasks(label, tasks, options) {
-  if (options.force) {
-    addLog(`[${label}] FORCE: archiving all ${tasks.length} tasks (skip state filter + PR check)`)
-    return { toArchive: [...tasks], toSkip: [] }
-  }
-
-  const candidates = tasks.filter(isArchivable)
-  const activeCount = tasks.length - candidates.length
-
-  addLog(`[${label}] ${tasks.length} total: ${candidates.length} archivable, ${activeCount} active`)
-
-  if (candidates.length === 0) {
-    const states = [...new Set(tasks.map((t) => t.state))].join(', ')
-    addLog(`[${label}] No archivable tasks among ${tasks.length} (states seen: ${states}).`)
-    addLog(`[${label}] Enable Force to archive regardless of state.`)
-    return { toArchive: [], toSkip: [] }
-  }
-
-  const byRepo = groupTasksByRepo(candidates)
-  addLog(`\n[${label}] Checking open PRs per task...`)
-  const { ghOwner } = await chrome.storage.sync.get(['ghOwner'])
-  const { ghToken } = await chrome.storage.local.get(['ghToken'])
-
-  const repoEntries = [...byRepo.entries()]
-  const allPRs = await runInPool(repoEntries, API_CONCURRENCY, ([_repo, repoTasks]) => {
-    const owner = repoTasks[0]?.owner || ghOwner || ''
-    const repoName = repoTasks[0]?.repoName || ''
-    return owner && repoName ? getOpenPRs(owner, repoName, ghToken) : Promise.resolve([])
-  })
-
-  const toArchive = []
-  const toSkip = []
-  const prLogs = []
-  for (let i = 0; i < repoEntries.length; i++) {
-    const [repo, repoTasks] = repoEntries[i]
-    const openPRs = allPRs[i]
-    prLogs.push(`  ${repo}: ${repoTasks.length} tasks, ${openPRs.length} open PRs`)
-
-    for (const task of repoTasks) {
-      if (taskHasOpenPR(task, openPRs)) {
-        toSkip.push(task)
-        prLogs.push(`    SKIP [${task.id}] ${task.title} (matching open PR)`)
-      } else {
-        toArchive.push(task)
-      }
-    }
-  }
-  if (prLogs.length > 0) addLog(prLogs.join('\n'))
-
-  return { toArchive, toSkip }
+  addLog(`[${label}] FORCE: archiving all ${tasks.length} tasks (skip state filter)`)
+  return { toArchive: [...tasks], toSkip: [] }
 }
 
 function logDryRun(label, toArchive) {
@@ -1355,9 +1254,7 @@ async function processTab(tab, options) {
   }
 
   if (toArchive.length === 0) {
-    if (!options.force && filteredTasks.some(isArchivable)) {
-      addLog(`[${label}] Nothing to archive (all tasks have matching open PRs).`)
-    }
+    
     return 0
   }
 
@@ -1379,10 +1276,11 @@ async function processTab(tab, options) {
 }
 
 function initOperationState(options) {
-  prCache.clear()
+  options.force = true
   const randomArray = new Uint32Array(1)
   crypto.getRandomValues(randomArray)
   reqCounter = (randomArray[0] % 900000) + 100000
+  stopKeepAlive()
   startKeepAlive()
   updateState({
     status: 'running',
@@ -1402,7 +1300,9 @@ function initOperationState(options) {
         ? '=== REMOVE SUGGESTIONS MODE ==='
         : '=== ARCHIVE MODE ==='
   addLog(modeHeader)
-  if (options.force) addLog('=== FORCE MODE (skip PR check) ===')
+  if (!options.opMode || options.opMode === 'archive') {
+    addLog('=== FORCE MODE (always archive) ===')
+  }
   addLog('=== v2: batchexecute API ===')
   return options.opMode === 'suggestions'
 }
@@ -1541,7 +1441,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         sendResponse({ error: 'Security Error: Unauthorized action from content script' })
         break
       }
-      prCache.clear()
+      
       stopKeepAlive()
       state = { ...DEFAULT_STATE }
       chrome.storage.session.set({ archiveState: state })

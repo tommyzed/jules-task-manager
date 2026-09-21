@@ -107,7 +107,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       return true // async response
 
     case 'GET_CODEBASES': {
-      const codebases = Array.from(document.querySelectorAll('.source-row.clickable-row.unadded-source'))
+      const codebases = Array.from(document.querySelectorAll('.source-row.clickable-row'))
         .map(el => el.textContent.trim())
         .filter(Boolean)
       sendResponse({ codebases })
