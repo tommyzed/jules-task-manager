@@ -1277,6 +1277,9 @@ async function processTab(tab, options) {
 
 function initOperationState(options) {
   options.force = true
+  if (options.repoFilter === '__ALL__') {
+    options.repoFilter = ''
+  }
   const randomArray = new Uint32Array(1)
   crypto.getRandomValues(randomArray)
   reqCounter = (randomArray[0] % 900000) + 100000

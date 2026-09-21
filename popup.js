@@ -46,18 +46,27 @@ function updateOpModeUI(value) {
     b.setAttribute('aria-pressed', String(isActive))
   })
 
-  // Context-aware start button text
-  if (!startBtn.disabled) {
-    const modeRadio = document.querySelector('input[name="mode"]:checked')
-    const isDry = modeRadio && modeRadio.value === 'dry'
-    if (value === 'archive') {
-      startBtn.textContent = isDry ? 'Dry Run Archive' : 'Start Archiving'
-    } else if (value === 'remove_suggestions') {
-      startBtn.textContent = isDry ? 'Dry Run Remove Suggestions' : 'Remove Suggestions'
-    } else {
-      startBtn.textContent = isDry ? 'Dry Run Suggestions' : 'Start Suggestions'
-    }
+  updateStartButtonText()
+}
+
+function updateStartButtonText() {
+  if (startBtn.getAttribute('aria-busy') === 'true') return
+  const modeRadio = document.querySelector('input[name="mode"]:checked')
+  const isDry = modeRadio && modeRadio.value === 'dry'
+  if (opMode === 'archive') {
+    startBtn.textContent = isDry ? 'Dry Run Archive' : 'Start Archiving'
+  } else if (opMode === 'remove_suggestions') {
+    startBtn.textContent = isDry ? 'Dry Run Remove Suggestions' : 'Remove Suggestions'
+  } else {
+    startBtn.textContent = isDry ? 'Dry Run Suggestions' : 'Start Suggestions'
   }
+}
+
+function updateStartBtnState() {
+  if (startBtn.getAttribute('aria-busy') === 'true') return
+  const hasSelection = Boolean(repoFilterInput.value)
+  startBtn.disabled = !hasSelection
+  updateStartButtonText()
 }
 
 document.querySelectorAll('#opMode button').forEach((btn) => {
@@ -70,71 +79,75 @@ document.querySelectorAll('#opMode button').forEach((btn) => {
 // Update button text when execution mode changes
 document.querySelectorAll('input[name="mode"]').forEach((radio) => {
   radio.addEventListener('change', () => {
-    if (!startBtn.disabled && !startBtn.textContent.startsWith('⏳')) {
-      updateOpModeUI(opMode)
-    }
+    updateStartButtonText()
   })
 })
 
-chrome.storage.sync.get(['opMode', 'repoFilter'], (syncData) => {
-  if (syncData.repoFilter) {
-    repoFilterInput.dataset.savedValue = syncData.repoFilter
-    repoFilterInput.value = syncData.repoFilter
-  }
+chrome.storage.sync.get(['opMode'], (syncData) => {
   if (syncData.opMode) {
     setActiveOpMode(syncData.opMode)
   }
 })
 
-async function populateCodebases() {
+function applyCodebases(codebases) {
+  const currentValue = repoFilterInput.value
+
+  // Clear options except the first one ("Choose a Repo")
+  while (repoFilterInput.options.length > 1) {
+    repoFilterInput.remove(1)
+  }
+
+  for (const cb of codebases) {
+    const opt = document.createElement('option')
+    opt.value = cb
+    opt.textContent = cb
+    repoFilterInput.appendChild(opt)
+  }
+
+  // Add "All Repositories" option at the bottom
+  const allOpt = document.createElement('option')
+  allOpt.value = '__ALL__'
+  allOpt.textContent = 'All Repositories'
+  repoFilterInput.appendChild(allOpt)
+
+  if (currentValue) {
+    repoFilterInput.value = currentValue
+  }
+  updateStartBtnState()
+}
+
+const MAX_RETRIES = 3
+const RETRY_DELAY_MS = 1000
+
+async function populateCodebases(attempt = 0) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
   if (!tab?.id) return
 
   chrome.tabs.sendMessage(tab.id, { action: 'GET_CODEBASES' }, (response) => {
-    if (chrome.runtime.lastError) return
-
-    if (response?.codebases) {
-      const currentValue = repoFilterInput.dataset.savedValue || repoFilterInput.value
-
-      // Clear options except the first one
-      while (repoFilterInput.options.length > 1) {
-        repoFilterInput.remove(1)
+    if (chrome.runtime.lastError || !response?.codebases?.length) {
+      if (attempt < MAX_RETRIES) {
+        setTimeout(() => populateCodebases(attempt + 1), RETRY_DELAY_MS)
       }
-
-      let foundSaved = false
-      for (const cb of response.codebases) {
-        const opt = document.createElement('option')
-        opt.value = cb
-        opt.textContent = cb
-        repoFilterInput.appendChild(opt)
-        if (cb === currentValue) foundSaved = true
-      }
-
-      if (currentValue && !foundSaved) {
-        const opt = document.createElement('option')
-        opt.value = currentValue
-        opt.textContent = currentValue + ' (Saved)'
-        repoFilterInput.appendChild(opt)
-      }
-
-      if (currentValue) {
-        repoFilterInput.value = currentValue
-      }
+      return
     }
+    applyCodebases(response.codebases)
   })
 }
 
 populateCodebases()
-// --- Save settings on change ---
+updateStartBtnState()
+
+// --- Update start button on repo selection change ---
 repoFilterInput.addEventListener('change', () => {
-  chrome.storage.sync.set({ repoFilter: repoFilterInput.value.trim() })
+  updateStartBtnState()
 })
 
 // --- Start operation ---
 startBtn.addEventListener('click', async () => {
-  chrome.storage.sync.set({
-    repoFilter: repoFilterInput.value.trim()
-  })
+  const selected = repoFilterInput.value
+  if (!selected) {
+    return // Non-functional if "Choose a Repo" is selected
+  }
 
   const mode = document.querySelector('input[name="mode"]:checked').value
 
@@ -150,7 +163,7 @@ startBtn.addEventListener('click', async () => {
     force: true,
     activeTabId,
     opMode,
-    repoFilter: repoFilterInput.value.trim()
+    repoFilter: selected === '__ALL__' ? '' : selected.trim()
   }
 
   // Reset UI
@@ -168,15 +181,15 @@ startBtn.addEventListener('click', async () => {
   chrome.runtime.sendMessage({ action: 'START', options })
 })
 
-// --- Reset ---
+// --- Reset (Clear Log) ---
 resetBtn.addEventListener('click', () => {
   chrome.runtime.sendMessage({ action: 'RESET' })
-  startBtn.disabled = false
   startBtn.removeAttribute('aria-busy')
-  updateOpModeUI(opMode)
   resetBtn.style.display = 'none'
   progressSection.style.display = 'none'
   summarySection.style.display = 'none'
+  repoFilterInput.value = ''
+  updateStartBtnState()
   // Move focus back to the primary action so keyboard users are not stranded
   // on the now-hidden Reset button.
   startBtn.focus()
@@ -216,9 +229,8 @@ function renderState(state) {
 
   // Done or error
   if (state.status === 'done' || state.status === 'error') {
-    startBtn.disabled = false
     startBtn.removeAttribute('aria-busy')
-    updateOpModeUI(opMode)
+    updateStartBtnState()
     resetBtn.style.display = 'block'
     progressFill.style.width = '100%'
     progressFill.parentElement.setAttribute('aria-valuenow', '100')
@@ -287,6 +299,9 @@ chrome.runtime.sendMessage({ action: 'GET_STATE' }, (state) => {
       startBtn.textContent = getRunningText()
     } else {
       resetBtn.style.display = 'block'
+      updateStartBtnState()
     }
+  } else {
+    updateStartBtnState()
   }
 })

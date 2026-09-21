@@ -108,7 +108,11 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
     case 'GET_CODEBASES': {
       const codebases = Array.from(document.querySelectorAll('.source-row.clickable-row'))
-        .map(el => el.textContent.trim())
+        .map(el => {
+          const owner = el.querySelector('.owner')?.textContent.trim() || ''
+          const repo = el.querySelector('.repo')?.textContent.trim() || ''
+          return owner && repo ? `${owner}/${repo}` : ''
+        })
         .filter(Boolean)
       sendResponse({ codebases })
       break
