@@ -50,21 +50,11 @@ function extractAccountNum(url) {
 async function jFetch(url, options = {}) {
   const urlObj = new URL(url)
   const origin = urlObj.origin
-  if (origin !== JULES_ORIGIN && origin !== 'https://api.github.com') {
+  if (origin !== JULES_ORIGIN) {
     throw new Error('Security Error: Disallowed fetch origin')
   }
 
-  const { token, headers = {}, ...rest } = options
-
-  if (token) {
-    if (origin !== 'https://api.github.com') {
-      throw new Error('Security Error: Refusing to send GitHub token to non-GitHub origin')
-    }
-    if (typeof token !== 'string') throw new Error('Token must be a string')
-    if (/[\r\n]/.test(token)) throw new Error('Invalid token: contains newline')
-    headers.Authorization = `token ${token}`
-  }
-
+  const { headers = {}, ...rest } = options
   const res = await fetch(url, { headers, ...rest })
   if (!res.ok) {
     throw new Error(`HTTP ${res.status}`)

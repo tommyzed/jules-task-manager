@@ -10,8 +10,7 @@
     "webNavigation"
   ],
   "host_permissions": [
-    "https://jules.google.com/*",
-    "https://api.github.com/*"
+    "https://jules.google.com/*"
   ],
   "background": {
     "service_worker": "background.js"
