@@ -1,3 +1,4 @@
+// Modified by tommyzed: Updated manager namespace and messaging
 /**
  * Jules Task Manager — MAIN World Script
  *

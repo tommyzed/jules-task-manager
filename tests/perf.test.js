@@ -1,3 +1,4 @@
+// Modified by tommyzed: Updated archive task test assertions
 const { describe, it } = require('node:test')
 const assert = require('node:assert')
 const fs = require('node:fs')

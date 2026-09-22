@@ -1,3 +1,4 @@
+/* // Modified by tommyzed: Updated theme styling and footer */
 * {
   margin: 0;
   padding: 0;
@@ -310,4 +311,23 @@ button.secondary:hover {
 .coffee-icon {
   width: 16px;
   height: 16px;
+}
+
+footer {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #2d2d4a;
+  text-align: center;
+}
+
+.footer-link {
+  color: #94a3b8;
+  font-size: 11px;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-link:hover {
+  color: #ff2a8d;
+  text-decoration: underline;
 }

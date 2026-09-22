@@ -1,3 +1,4 @@
+// Modified by tommyzed: Added repository filtering and suggestions
 importScripts('utils.js')
 /**
  * Jules Task Manager v2 — Background Service Worker

@@ -1,3 +1,4 @@
+// Modified by tommyzed: Updated message types and codebases
 /**
  * Jules Task Manager — Content Script (Isolated World)
  *

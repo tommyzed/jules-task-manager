@@ -1,3 +1,4 @@
+// Modified by tommyzed: Updated popup unit test assertions
 const { describe, it } = require('node:test')
 const assert = require('node:assert')
 const fs = require('node:fs')
@@ -167,7 +168,7 @@ function createMockDocument(elements, opModeButtons, radioStates) {
           forEach: (cb) => opModeButtons.forEach(cb)
         }
       }
-      return { forEach: () => {} }
+      return { forEach: () => { } }
     },
     createElement: (tag) => createMockElement(tag),
     createDocumentFragment: () => {
@@ -417,7 +418,7 @@ describe('Button Event Handlers', () => {
 
   it('should move keyboard focus to startBtn after reset', () => {
     const { sandbox, elements } = setupPopupSandbox()
-    sandbox.chrome.runtime.sendMessage = () => {}
+    sandbox.chrome.runtime.sendMessage = () => { }
 
     vm.runInContext(popupJs, sandbox)
 
@@ -443,9 +444,9 @@ describe('popup.html accessibility', () => {
     assert.ok(popupHtml.includes('<legend id="execModeLabel">'), 'mode group should use legend')
   })
 
-  it('should include Ego/dev/null author link pointing to https://www.egodevnull.com/', () => {
+  it('should include ego/DEV/null author link pointing to https://www.egodevnull.com/', () => {
     assert.ok(popupHtml.includes('href="https://www.egodevnull.com/"'), 'author link href should point to egodevnull.com')
-    assert.ok(popupHtml.includes('Ego/dev/null'), 'author link text should contain Ego/dev/null')
+    assert.ok(popupHtml.includes('ego/DEV/null'), 'author link text should contain ego/DEV/null')
   })
 
   it('should include Ko-fi coffee icon link pointing to https://ko-fi.com/egodevnull', () => {

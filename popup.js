@@ -1,3 +1,4 @@
+// Modified by tommyzed: Added repository selector and suggestions
 /**
  * Jules Task Manager — Popup Script
  *
