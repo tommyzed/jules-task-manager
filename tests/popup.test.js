@@ -446,7 +446,11 @@ describe('popup.html accessibility', () => {
 
   it('should include ego/DEV/null author link pointing to https://www.egodevnull.com/', () => {
     assert.ok(popupHtml.includes('href="https://www.egodevnull.com/"'), 'author link href should point to egodevnull.com')
-    assert.ok(popupHtml.includes('ego/DEV/null'), 'author link text should contain ego/DEV/null')
+    assert.ok(
+      popupHtml.includes('ego/<span>DEV</span>/null') ||
+        popupHtml.replace(/<[^>]+>/g, '').includes('ego/DEV/null'),
+      'author link text should contain stylized ego/DEV/null'
+    )
   })
 
   it('should include Ko-fi coffee icon link pointing to https://ko-fi.com/egodevnull', () => {

@@ -50,6 +50,29 @@ header {
   text-decoration: underline;
 }
 
+.header-links a.author-brand {
+  font-weight: 700;
+  color: #ff2a8d;
+  text-decoration: none;
+  letter-spacing: 0.3px;
+  transition: color 0.2s ease;
+}
+
+.header-links a.author-brand span {
+  color: #38bdf8;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+.header-links a.author-brand:hover {
+  color: #ff69b4;
+  text-decoration: none;
+}
+
+.header-links a.author-brand:hover span {
+  color: #7dd3fc;
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+}
+
 h1 {
   font-size: 15px;
   font-weight: 600;
